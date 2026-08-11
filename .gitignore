@@ -1,0 +1,42 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session data files
+.RData
+.RDataTmp
+.Ruserdata
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build / check
+/*.tar.gz
+/*.Rcheck/
+
+# RStudio files
+.Rproj.user/
+*.Rproj
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+*_files/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# R Environment Variables
+.Renviron
+.Rprofile
+
+# Default plot device output
+Rplots.pdf
+
+# macOS
+.DS_Store
