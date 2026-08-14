@@ -44,10 +44,10 @@ so that the age structure of mortality is described by a B-spline expansion whos
 coefficients `beta_ijt` are **tied** whenever two countries belong to the same cluster at the pair
 (basis `j`, period `t`). 
 
-Note that `gamma_1, ..., gamma_6` are parallel lines in time: the paper fixes their common slope
-(`-0.02`), while their intercepts are chosen so that the resulting surfaces reproduce realistic
-levels of log-mortality across the age range. The default intercepts in
-`simulate_scenario_4_1()` are the ones used to produce the data analysed below.
+Note that `(phi_kj1, ..., phi_kjT)` for different clusters `k` are parallel lines in time:
+the paper fixes their common slope (`-0.02`), while their intercepts are chosen so that 
+the resulting surfaces reproduce realistic levels of log-mortality across the age range. 
+The default intercepts in `simulate_scenario_4_1()` are the ones used to produce the data analysed below.
 
 ```r
 clusters <- cluster_setting_4_1()
