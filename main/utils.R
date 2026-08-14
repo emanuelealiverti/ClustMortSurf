@@ -159,16 +159,18 @@ sq_exp_ker <- function(d, l){
 ## ----------------------------------------------------------------------
 ## Compute posterior similarity matrix from MCMC draws
 ## ----------------------------------------------------------------------
-## DESCRIPTION TO BE DONE.
+## Computes the posterior similarity matrix (PSM) for each spline basis
+## and time point, measuring the pairwise co-clustering probabilities across
+## MCMC samples.
 ##
 ## Arguments
+##    import    logical; if TRUE, loads pre-computed PSM from "psm.RDS"
+##    save      logical; if TRUE, saves the computed PSM to "psm.RDS"
+##    draws     list of MCMC sample arrays for cluster allocations
+##    burnin    number of initial MCMC iterations to discard as burn-in
 ##
-##    import
-##    save
-##    draws
-##    burnin
-##
-## Value: .
+## Value: a list of 3D arrays containing co-clustering probabilities for each spline basis.
+
 compute_prob_coclust <- function(import = FALSE, save = FALSE, draws = NULL, burnin = NULL){
   
   require(mcclust)
@@ -214,17 +216,17 @@ compute_prob_coclust <- function(import = FALSE, save = FALSE, draws = NULL, bur
 ## ----------------------------------------------------------------------
 ## Compute partition point estimate from PSM
 ## ----------------------------------------------------------------------
-## DESCRIPTION TO BE DONE.
+## Extracts a point estimate of the partition structure by minimizing the
+## Variation of Information (VI) loss function over MCMC draws given a PSM.
 ##
 ## Arguments
+##    import    logical; if TRUE, loads pre-computed point estimates from "ppe.RDS"
+##    save      logical; if TRUE, saves the computed point estimates to "ppe.RDS"
+##    draws     list of MCMC sample arrays for cluster allocations
+##    psm       list of posterior similarity matrices obtained from compute_prob_coclust
+##    burnin    number of initial MCMC iterations to discard as burn-in
 ##
-##    import
-##    save
-##    draws
-##    psm
-##    burnin
-##
-## Value: .
+## Value: a list of matrices with cluster label point estimates per unit and time point.
 
 compute_partition_point_est <- function(import = FALSE, save = FALSE, 
                                         draws = NULL, psm = NULL, burnin = NULL){
@@ -267,6 +269,19 @@ compute_partition_point_est <- function(import = FALSE, save = FALSE,
 }
 
 
+
+## ----------------------------------------------------------------------
+## Minimize Variation of Information with multiple restarts
+## ----------------------------------------------------------------------
+## Helper function that runs VI minimization using 'mcclust.ext' initialized
+## at multiple random partition states to avoid local minima.
+##
+## Arguments
+##    draws    matrix of posterior cluster allocation draws
+##    psm      posterior similarity matrix; if NULL, computed on the fly
+##
+## Value: a vector of optimal cluster labels minimizing VI.
+
 my.minVI <- function(draws, psm = NULL){
   
   require(mcclust)
@@ -291,15 +306,15 @@ my.minVI <- function(draws, psm = NULL){
 ## ----------------------------------------------------------------------
 ## Summarise estimates of cluster labels
 ## ----------------------------------------------------------------------
-## DESCRIPTION TO BE DONE.
+## Evaluates clustering accuracy against a ground truth partition by computing
+## Normalized Variation of Information (NVI) accuracy for point estimate and PSM alignment.
 ##
 ## Arguments
+##    ppe              list of estimated cluster label matrices (from compute_partition_point_est)
+##    psm              list of posterior similarity matrices (from compute_prob_coclust)
+##    clusters_true    list of matrices containing true cluster memberships
 ##
-##    ppe
-##    psm
-##    clusters_true
-##
-## Value: .
+## Value: a list containing matrices of PSM accuracy ('psm_acc') and PPE accuracy ('ppe_acc').
 
 summarise_clusters <- function(ppe, psm, clusters_true){
   
@@ -331,17 +346,18 @@ summarise_clusters <- function(ppe, psm, clusters_true){
 ## ----------------------------------------------------------------------
 ## Obtain estimates for individual spline coefficients from MCMC samples
 ## ----------------------------------------------------------------------
-## DESCRIPTION TO BE DONE.
+## Maps cluster-level spline coefficients back to individual observation units
+## by matching cluster draws with unit assignment draws across MCMC iterations.
 ##
 ## Arguments
+##    import        logical; if TRUE, loads pre-computed coefficients from "beta_units.RDS"
+##    save          logical; if TRUE, saves the computed unit coefficients to file
+##    draws_beta    list of MCMC sample arrays for cluster-level spline coefficients
+##    draws_labs    list of MCMC sample arrays for unit cluster assignments
+##    burnin        number of initial MCMC iterations to discard as burn-in
 ##
-##    import
-##    save
-##    draws_beta
-##    draws_labs
-##    burnin
-##
-## Value: .
+## Value: a 3D array of estimated unit-level spline coefficients (units x splines x years).
+
 compute_beta_units <- function(import = FALSE, save = FALSE, 
                                draws_beta = NULL, draws_labs = NULL, burnin = NULL){
   
@@ -397,15 +413,15 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
 ## ----------------------------------------------------------------------
 ## Summarise estimates of individual spline coefficients
 ## ----------------------------------------------------------------------
-## DESCRIPTION TO BE DONE.
+## Merges estimated spline coefficients with true benchmark coefficients into
+## a single tidy data frame for post-estimation comparison and plotting.
 ##
 ## Arguments
+##    estimated    3D array of estimated unit spline coefficients (from compute_beta_units)
+##    true         3D array of true unit spline coefficients
 ##
-##    ppe
-##    psm
-##    clusters_true
-##
-## Value: .
+## Value: a data frame joining estimated and true coefficients by Unit, Spline, and Year.
+
 summarise_beta <- function(estimated, true){
   
   names(dimnames(estimated)) = names(dimnames(true)) = c("Unit", "Spline", "Year")
