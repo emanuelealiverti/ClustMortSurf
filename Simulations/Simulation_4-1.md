@@ -30,13 +30,14 @@ gb <- paste0("#", c("fb4934", "b8bb26", "fabd2f", "83a598", "d3869b", "8ec07c"))
 ## 1. Data-generating mechanism
 
 We simulate log-mortality rates for `n = 5` synthetic countries, observed over `T = 10` periods and
-for the ages `X = {0, 1, ..., 100}`. Data are generated under equations (1)–(4) of the paper:
+for the ages `X = {0, 1, ..., 100}`. Data are generated under equations (1)–(3) of the paper and splines
+coefficient distribution centered around parallel lines:
 
 ```
 log m_ixt = f_it(x) + eps_ixt,          eps_ixt ~ N(0, sigma_i^2)
 f_it(x)   = sum_{j=1}^p beta_ijt g_j(x)
 beta_ijt  = theta_{c_ijt, j, t}
-theta_kjt ~ N(gamma_jt, tau_j^2)
+theta_kjt ~ N(phi_kjt, delta_j^2)        phi_kjt = intercept_{kjt} + slope * (t - 1)
 ```
 
 so that the age structure of mortality is described by a B-spline expansion whose country-specific
