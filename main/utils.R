@@ -242,6 +242,9 @@ compute_partition_point_est <- function(import = FALSE, save = FALSE,
     
   } else {
     
+    require(mcclust)
+    require(mcclust.ext)
+    
     n <- dim(draws[[1]])[1]
     TT <- dim(draws[[1]])[2]
     p <- length(draws)
@@ -283,9 +286,6 @@ compute_partition_point_est <- function(import = FALSE, save = FALSE,
 ## Value: a vector of optimal cluster labels minimizing VI.
 
 my.minVI <- function(draws, psm = NULL){
-  
-  require(mcclust)
-  require(mcclust.ext)
   
   if (is.null(psm)){psm <- comp.psm(draws)}
   start_set <- draws[sample(1:nrow(draws), 10, replace = FALSE), ]
@@ -333,7 +333,8 @@ summarise_clusters <- function(ppe, psm, clusters_true){
     for (t in seq_len(TT)){
       nvi[j, t] <- NVI(clusters_true[[j]][ , t], ppe[[j]][ , t])
       adj_true <- 1*outer(clusters_true[[j]][ , t], clusters_true[[j]][ , t], "==")
-      psm_acc[j, t] <- mean(adj_true*psm[[j]][ , , t] + (1-adj_true)*(1-psm[[j]][ , , t]))
+      diag(adj_true) <- 0
+      psm_acc[j, t] <- sum(adj_true*psm[[j]][ , , t] + (1-adj_true)*(1-psm[[j]][ , , t])) / (n*(n-1))
     }
   }
   
@@ -393,12 +394,12 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
       
       
       for (t in seq_len(TT)){
-          l <- labs[ , t, ]
-          b <- beta[ , t, ]
-          # Work with vector version of b and l for faster execution
-          l_vec = c(l) + rep((nrow(l))*(1:ncol(l)-1), each = nrow(l))
-          b_vec = c(b)
-          beta_units[, j, t] <- rowMeans(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)))
+        l <- labs[ , t, ]
+        b <- beta[ , t, ]
+        # Work with vector version of b and l for faster execution
+        l_vec = c(l) + rep((nrow(l))*(1:ncol(l)-1), each = nrow(l))
+        b_vec = c(b)
+        beta_units[, j, t] <- rowMeans(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)))
       }
       
     }
@@ -424,10 +425,13 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
 
 summarise_beta <- function(estimated, true){
   
+  require(dplyr)
+  require(reshape2)
+  
   names(dimnames(estimated)) = names(dimnames(true)) = c("Unit", "Spline", "Year")
   beta_df <- full_join(melt(estimated, value.name = "Beta_est"),
-                       melt(true, value.name = "Beta_true"),
-                       by = c("Unit", "Spline", "Year"))
+                              melt(true, value.name = "Beta_true"),
+                              by = c("Unit", "Spline", "Year"))
   
   
 }

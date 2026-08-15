@@ -357,6 +357,7 @@ up_M <- function(gamma_j, labels_j, M_j,
 ##        ('parameters'), input data ('data'), and fitted metadata ('other').
 
 run_model <- function(Y,
+                      ages,
                       seed = 4238,
                       a_sigma = 0.001, b_sigma = 0.001,
                       a_alpha = 1, b_alpha = 1,
@@ -368,6 +369,9 @@ run_model <- function(Y,
                       path_save = "",
                       name_save = paste(paste("res", Sys.Date(), sep = "_"), ".RDS", sep = "")){
   
+  # Transform input data into list of matrices (one per country/unit)
+  Y <- apply(Y, 1, function(x) t(x), simplify = FALSE)
+  
   library(splines2)
   set.seed(seed)
   
@@ -375,10 +379,10 @@ run_model <- function(Y,
   # B-Spline basis matrix setup
   # ----------------------------------------------------------------------
   ages <- 0:100
-  ages_no0 <- ages[-1]
+  ages_no0 <- ages[ages!= 0]
   
   # Construct spline basis functions over ages
-  S <- spline_basis(knots = c(20, 40))
+  S <- spline_basis(ages = ages_no0, knots = c(20, 40))
   
   # ----------------------------------------------------------------------
   # Model Dimensions and Covariance Matrix Initialization

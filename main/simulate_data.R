@@ -33,14 +33,14 @@ spline_basis <- function(ages, knots = NULL, p = NULL, degree = 2) {
   
   require(splines2)
   
-  G.temp <- bSpline(ages, knots = knots, degree = degree, intercept = TRUE)
-  K <- ncol(G.temp)
-  for (k in 1:K){G.temp[,k] <- G.temp[,k]/max(G.temp[,k])}
+  S.temp <- bSpline(ages, knots = knots, degree = degree, intercept = TRUE)
+  K <- ncol(S.temp)
+  for (k in 1:K){S.temp[,k] <- S.temp[,k]/max(S.temp[,k])}
   
   # Add Dirac delta in 0 as first spline
-  G <- rbind(c(1, rep(0, k)), cbind(rep(0, length(ages)), G.temp))
+  S <- rbind(c(1, rep(0, k)), cbind(rep(0, length(ages)), S.temp))
   
-  return(G)
+  return(S)
 }
 
 
@@ -56,29 +56,58 @@ spline_basis <- function(ages, knots = NULL, p = NULL, degree = 2) {
 ##
 ## Value: a list of p matrices (n x T) with the true memberships c_jt.
 
-cluster_setting_4_1 <- function() {
+cluster_setting_4_1 <- function(n, TT) {
   
-  ## bases 1-3
-  b0 <- rbind(
-    c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1, 1, 1, 1, 2, 2, 2, 2, 2,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-    c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  2, 2, 2, 2, 2, 5, 5, 5, 5, 5,  2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
-    c(1, 1, 1, 1, 1, 3, 3, 3, 3, 3,  4, 4, 4, 4, 4, 2, 2, 2, 2, 2,  3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
-    c(2, 2, 2, 2, 2, 4, 4, 4, 4, 4,  3, 3, 3, 3, 3, 5, 5, 5, 5, 5,  4, 4, 4, 4, 4, 4, 4, 4, 4, 4),
-    c(2, 2, 2, 2, 2, 5, 5, 5, 5, 5,  4, 4, 4, 4, 4, 5, 5, 5, 5, 5,  5, 5, 5, 5, 5, 5, 5, 5, 5, 5))
   
-  ## bases 4-6
-  b1 <- rbind(
-    c(3, 3, 3, 3, 3, 3, 3, 3, 3, 3,  1, 1, 1, 1, 1, 3, 3, 3, 3, 3,  3, 3, 4, 4, 5, 5, 3, 3, 2, 2),
-    c(3, 3, 3, 3, 3, 3, 3, 3, 3, 3,  1, 1, 1, 1, 1, 4, 4, 4, 4, 4,  4, 4, 1, 1, 3, 3, 1, 1, 4, 4),
-    c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  2, 2, 2, 2, 2, 5, 5, 5, 5, 5,  3, 3, 5, 5, 5, 5, 5, 5, 2, 2),
-    c(3, 3, 3, 3, 3, 3, 3, 3, 3, 3,  1, 1, 1, 1, 1, 5, 5, 5, 5, 5,  4, 4, 4, 4, 3, 3, 5, 5, 1, 1),
-    c(3, 3, 3, 3, 3, 3, 3, 3, 3, 3,  3, 3, 3, 3, 3, 5, 5, 5, 5, 5,  2, 2, 4, 4, 2, 2, 3, 3, 5, 5))
   
-  dimnames(b0) <- list(paste0("Unit", 1:5), rep(1:10, 3))
-  dimnames(b1) <- list(paste0("Unit", 1:5), rep(1:10, 3))
+  #1
+  b1 = matrix(c(rep(1, TT/2), rep(1, TT/2),
+                rep(1, TT/2), rep(1, TT/2), 
+                rep(1, TT/2), rep(3, TT/2),
+                rep(2, TT/2), rep(4, TT/2),
+                rep(2, TT/2), rep(5, TT/2)),
+              nrow = n, ncol = TT, byrow = T)
+  #2
+  b2 = matrix(c(rep(1, TT/2), rep(2, TT/2),
+                rep(2, TT/2), rep(5, TT/2),
+                rep(4, TT/2), rep(2, TT/2),
+                rep(3, TT/2), rep(5, TT/2),
+                rep(4, TT/2), rep(5, TT/2)),
+              nrow = n, ncol = TT, byrow = T)
+  #3
+  b3 = matrix(c(rep(1, TT/2), rep(1, TT/2),
+                rep(2, TT/2), rep(2, TT/2),
+                rep(3, TT/2), rep(3, TT/2),
+                rep(4, TT/2), rep(4, TT/2),
+                rep(5, TT/2), rep(5, TT/2)),
+              nrow = n, ncol = TT, byrow = T)
+  #4
+  b4 = matrix(c(rep(3, TT/2), rep(3, TT/2),
+                rep(3, TT/2), rep(3, TT/2),
+                rep(1, TT/2), rep(1, TT/2),
+                rep(3, TT/2), rep(3, TT/2),
+                rep(3, TT/2), rep(3, TT/2)),
+              nrow = n, ncol = TT, byrow = T)
+  #5
+  b5 = matrix(c(rep(1, TT/2), rep(3, TT/2),
+                rep(1, TT/2), rep(4, TT/2),
+                rep(2, TT/2), rep(5, TT/2),
+                rep(1, TT/2), rep(5, TT/2),
+                rep(3, TT/2), rep(5, TT/2)),
+              nrow = n, ncol = TT, byrow = T)
+  #6
+  b6 = matrix(c(rep(sample(1:n, n, TRUE), each = 2),
+                rep(sample(1:n, n, TRUE), each = 2),
+                rep(sample(1:n, n, TRUE), each = 2),
+                rep(sample(1:n, n, TRUE), each = 2),
+                rep(sample(1:n, n, TRUE), each = 2)),
+              nrow = n, ncol = TT, byrow = T)
   
-  list("Spline 1" = b0[, 1:10],  "Spline 2" = b0[, 11:20], "Spline 3" = b0[, 21:30],
-       "Spline 4" = b1[, 1:10],  "Spline 5" = b1[, 11:20], "Spline 6" = b1[, 21:30])
+  dimnames(b1) <- dimnames(b2) <- dimnames(b3) <- 
+    dimnames(b4) <- dimnames(b5) <- dimnames(b6) <- list(paste0("Unit", 1:5), 1:10)
+  
+  list("Spline 1" = b1,  "Spline 2" = b2, "Spline 3" = b3,
+       "Spline 4" = b4,  "Spline 5" = b5, "Spline 6" = b6)
 }
 
 
@@ -91,13 +120,13 @@ cluster_setting_4_1 <- function() {
 ##    log m_ixt = f_it(x) + eps_ixt,           eps_ixt ~ N(0, sigma^2)
 ##    f_it(x)   = sum_{j=1}^p beta_ijt g_j(x)
 ##    beta_ijt  = theta_{c_ijt, j, t}
-##    theta_kjt ~ N(phi_kjt, tau_j^2),        phi_kjt = int_{kjt} + slope * (t - 1)
+##    theta_kjt ~ N(phi_kjt, tau_j^2),       phi_kjt = int_{kjt} + slope * (t - 1)
 ##
 ## Arguments
 ##    clusters        list of p matrices (n x T) with the true memberships c_jt
 ##    ages            age grid X
 ##    sigma           country-specific residual sd (sigma_i = sigma for all i)
-##    delta           vector of length p with the cluster-level sds tau_j
+##    delta           vector of length p with the cluster-level sds delta_j
 ##    min_intercepts  vector of length p with the intercepts gamma_j0 of the
 ##                    parallel decreasing lines gamma_j
 ##    max_intercepts  vector of length p with the intercepts gamma_j0 of the
@@ -106,29 +135,30 @@ cluster_setting_4_1 <- function() {
 ##
 ## Value: a list with the simulated log-mortality array `log_m` (n x |X| x T),
 ## the true country-specific coefficients `beta` (n x p x T), the cluster-
-## specific values `theta`, the memberships `clusters` and the basis `B`.
+## specific values `theta`, the memberships `clusters` and the basis `S`.
 
-simulate_scenario_4_1 <- function(clusters        = cluster_setting_4_1(),
+simulate_scenario_4_1 <- function(n               = 5, 
+                                  TT              = 10, 
+                                  p               = 6, 
                                   ages            = 0:100,
                                   knots           = c(20, 40),
                                   min_intercepts  = c(-4.4, -7.1, -5, -5.4, -2.5, -1.5),
                                   max_intercepts  = c(-2, -4.5, -3, -3.8, -1, 0),
-                                  sigma           = 0.05,
-                                  tau             = c(0.05, 0.05, 0.05, 0.05, 0.10, 0.05),
+                                  sigma           = c(0.05, 0.05, 0.05, 0.05, 0.05),
+                                  delta           = c(0.05, 0.10, 0.05, 0.05, 0.05, 0.05),
                                   slope           = -0.02,
                                   seed            = 290497) {
   
   require(mvtnorm)
   
-  p <- length(clusters)
-  n <- nrow(clusters[[1]])
-  TT <- ncol(clusters[[1]])
-  stopifnot(length(tau) == p, length(min_intercepts) == p, length(max_intercepts) == p)
+  set.seed(seed)
+  
+  stopifnot(length(delta) == p, length(min_intercepts) == p, length(max_intercepts) == p)
   
   if (!is.null(knots)) {
-    G <- spline_basis(ages[-1], knots = knots)
+    S <- spline_basis(ages[-1], knots = knots)
   } else {
-    G <- spline_basis(ages[-1], p = p)
+    S <- spline_basis(ages[-1], p = p)
   }
   
   # Correlation matrix of GP
@@ -142,32 +172,36 @@ simulate_scenario_4_1 <- function(clusters        = cluster_setting_4_1(),
   for (j in seq_len(p)){
     intercepts[ , j] = seq(min_intercepts[j], max_intercepts[j], length.out = n)
   }
-  mu <- array(NA_real_, dim = c(n, p, TT),
-              dimnames = list(paste0("Cluster", seq_len(n)),
-                              paste0("Spline", seq_len(p)),
-                              seq_len(TT)))
+  phi <- array(NA_real_, dim = c(n, p, TT),
+               dimnames = list(paste0("Cluster", seq_len(n)),
+                               paste0("Spline", seq_len(p)),
+                               seq_len(TT)))
   for (j in seq_len(p)) {
     for (k in seq_len(n)){
-      mu[k, j, ] <- intercepts[k, j] + slope * (seq_len(TT) - 1)
+      phi[k, j, ] <- intercepts[k, j] + slope * seq_len(TT)
     }
   }
   
   
   ## cluster-specific coefficients beta_kjt and country-specific betas
   theta <- array(NA_real_, dim = c(n, p, TT),
-                         dimnames = list(paste0("Cluster", seq_len(n)),
-                                         paste0("Spline", seq_len(p)),
-                                         seq_len(TT)))
+                 dimnames = list(paste0("Cluster", seq_len(n)),
+                                 paste0("Spline", seq_len(p)),
+                                 seq_len(TT)))
   beta  <- array(NA_real_, dim = c(n, p, TT),
-                       dimnames = list(paste0("Unit", seq_len(n)),
-                                       paste0("Spline", seq_len(p)),
-                                       seq_len(TT)))
+                 dimnames = list(paste0("Unit", seq_len(n)),
+                                 paste0("Spline", seq_len(p)),
+                                 seq_len(TT)))
   
   for (j in seq_len(p)) {
     for (k in seq_len(n)){
-      th <- drop(rmvnorm(1, mu[k, j, ], tau[j]^2*Sigma))
+      th <- drop(rmvnorm(1, phi[k, j, ], delta[j]^2*Sigma))
       theta[k, j, ] <- th
     }
+  }
+  
+  clusters <- cluster_setting_4_1(n = n, TT = TT)
+  for (j in seq_len(p)){
     for (t in seq_len(TT)) {
       lab <- clusters[[j]][, t]
       beta[, j, t] <- theta[lab, j, t]
@@ -177,11 +211,15 @@ simulate_scenario_4_1 <- function(clusters        = cluster_setting_4_1(),
   ## log-mortality surfaces plus Gaussian noise
   log_m <- array(NA_real_, dim = c(n, length(ages), TT),
                  dimnames = list(paste0("Unit", seq_len(n)), ages, seq_len(TT)))
-  for (t in seq_len(TT)) {
-    f <- beta[, , t] %*% t(G)                       # n x |X|
-    log_m[, , t] <- f + rnorm(n * length(ages), 0, sigma)
+  # for (t in seq_len(TT)) {
+  #   f <- beta[, , t] %*% t(S)                       # n x |X|
+  #   log_m[, , t] <- f + rnorm(n * length(ages), 0, sigma[i])
+  # }
+  for (i in seq_len(n)) {
+    f <- t(beta[i, , ]) %*% t(S)                       # n x |X|
+    log_m[i, , ] <- t(f + rnorm(length(ages)*TT, 0, sigma[i]))
   }
   
-  list(log_m = log_m, beta_clusters = beta_clusters, beta_units = beta_units,
-       clusters = clusters, G = G, ages = ages, seed = seed)
+  list(log_m = log_m, beta = beta, theta = theta,
+       clusters = clusters, S = S, ages = ages, seed = seed)
 }
