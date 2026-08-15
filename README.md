@@ -18,12 +18,14 @@ and periods, rather than globally, and learns the number of groups automatically
 ```
 .
 ├── main/                    core functions
+│   ├── gibbs.R              Gibbs sampler functions
+│   ├── run_and_extract.R    Run Gibbs sampler and Monte Carlo summaries
 │   ├── simulate_data.R      B-spline bases and data-generating mechanism
-│   └── gibbs_tRPM.R         (to be added) Gibbs sampler and Monte Carlo summaries
+│   └── utils.R              Utility functions for both Gibbs sampler and results extraction
 └── Simulations/             reproducible tutorial for the simulation study
     ├── Simulation_4-1.md    step-by-step tutorial (Section 4.1)
-    ├── beta_df.RDS          posterior means of the spline coefficients
-    ├── coclust_df.RDS       (to be added) estimated cluster memberships
+    ├── beta_countries.RDS   posterior means of the spline coefficients
+    ├── coclust.RDS          posterior similarity matrix and estimated partitions
     └── img/                 figures produced by the tutorial
 ```
 
