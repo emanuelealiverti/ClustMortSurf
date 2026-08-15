@@ -59,7 +59,7 @@ sim      <- simulate_scenario_4_1(n = n, TT = TT, p = p)
 clusters <- sim$clusters
 
 str(sim$log_m)
-#  num [1:5, 1:101, 1:10] -3.6 -3.56 -3.71 -3.6 -3.62 ...
+#  num [1:5, 1:101, 1:10] -4.37 -4.33 -4.45 -3.82 -3.9 ...
 #  - attr(*, "dimnames")=List of 3
 #   ..$ : chr [1:5] "Unit1" "Unit2" "Unit3" "Unit4" ...
 #   ..$ : chr [1:101] "0" "1" "2" "3" ...
@@ -164,6 +164,15 @@ countries that are correctly co-clustered.
 summary_partition <- summarise_clusters(ppe = ppe, psm = psm, clusters_true = clusters)
 summary_partition$psm_acc
 
+#          Year
+# Spline          1       2       3       4       5       6       7       8       9      10
+#   Spline1 0.98986 0.99697 0.99911 0.99335 0.96822 0.99991 0.99998 0.99998 0.99989 0.99975
+#   Spline2 0.99600 0.99914 0.99948 0.99997 0.99869 0.98999 0.99916 0.99919 0.99978 0.99612
+#   Spline3 1.00000 1.00000 1.00000 1.00000 1.00000 1.00000 1.00000 1.00000 1.00000 1.00000
+#   Spline4 0.99105 0.99988 0.99925 0.99985 0.99782 0.99964 0.99952 0.99892 0.97704 0.98113
+#   Spline5 0.99587 0.99882 0.99992 0.99958 0.99327 0.99688 0.99992 0.99920 0.99912 0.99354
+#   Spline6 0.90617 0.89123 0.95522 0.95565 0.98097 0.97697 0.97932 0.98105 0.98754 0.98817
+
 # Prepare Tex table (Table 1 in the manuscript)
 toTex <- matrix(round(summary_partition$psm_acc, 3), nrow = p, ncol = TT)
 rownames(toTex) <- paste0("Spline ", 1:p, " $(j = ", 1:p, ")$")
@@ -178,15 +187,15 @@ The file `beta_countries.RDS` stores, for every country (`Unit`), spline basis (
 used to generate the data (`Beta_true`).
 
 ```r
-beta_df <- readRDS("beta_df.RDS")
-head(beta_df)
-#   Spline  Unit  Year Beta_est Beta_true
-#   Spline1 Unit1     1    -4.38     -4.43
-#   Spline1 Unit1     2    -4.41     -4.41
-#   Spline1 Unit1     3    -4.41     -4.45
-#   Spline1 Unit1     4    -4.51     -4.52
-#   Spline1 Unit1     5    -4.54     -4.55
-#   Spline1 Unit1     6    -4.53     -4.55
+beta_countries <- readRDS("beta_countries.RDS")
+head(beta_countries)
+#    Unit  Spline Year  Beta_est Beta_true
+# 1 Unit1 Spline1    1 -4.384382 -4.433928
+# 2 Unit2 Spline1    1 -4.383117 -4.433928
+# 3 Unit3 Spline1    1 -4.386075 -4.433928
+# 4 Unit4 Spline1    1 -3.859353 -3.860657
+# 5 Unit5 Spline1    1 -3.860789 -3.860657
+# 6 Unit1 Spline2    1 -6.851310 -6.904459
 ```
 
 The figure below (Figure 4 in the paper) compares the estimated trajectories (lines) with the true
