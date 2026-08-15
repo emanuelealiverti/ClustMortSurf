@@ -8,7 +8,7 @@ in which synthetic log-mortality rates are generated **under the proposed model*
 The analysis proceeds in three steps:
 
 1. [simulating the data](#1-data-generating-mechanism) and displaying the [true local clustering structure](#2-true-local-clustering-structure);
-2. [running the Gibbs sampler](#3-posterior-computation) and storing its two posterior summaries of interest, i.e. the estimated cluster memberships in `coclust_df.RDS` and the posterior means of the spline coefficients in `beta_df.RDS`;
+2. [running the Gibbs sampler](#3-posterior-computation) and storing posterior summaries of interest, i.e. the sequence of estimated posterior similarity matrices and partition point estimates in `coclust.RDS`, and the posterior means of the conutry-specific spline coefficients in `beta_countries.RDS`;
 3. [assessing the recovery of the local grouping structures](#4-co-clustering);
 4. [comparing estimated and true trajectories](#5-estimated-versus-true-coefficients) of the country-specific coefficients.
 
@@ -17,6 +17,7 @@ The code is meant to be run from within this folder, and the core routines are s
 ```r
 library(ggplot2)
 
+source("../main/utils.R")
 source("../main/simulate_data.R")
 
 set.seed(4321)
@@ -50,8 +51,12 @@ the resulting surfaces reproduce realistic levels of log-mortality across the ag
 The default intercepts in `simulate_scenario_4_1()` are the ones used to produce the data analysed below.
 
 ```r
-clusters <- cluster_setting_4_1()
-sim      <- simulate_scenario_4_1(clusters = clusters, ages = 0:100)
+n  <- 5 # number of countries
+TT <- 10 # number of time points
+p  <- 6 # number of spline bases
+
+sim      <- simulate_scenario_4_1(n = n, TT = TT, p = p)
+clusters <- sim$clusters
 
 str(sim$log_m)
 #  num [1:5, 1:101, 1:10] -3.6 -3.56 -3.71 -3.6 -3.62 ...
@@ -61,7 +66,7 @@ str(sim$log_m)
 #   ..$ : chr [1:10] "1" "2" "3" "4" ...
 ```
 
-The object `sim` contains the simulated log-mortality array `log_m` (countries × ages × periods), the true country-specific coefficients `beta` (countries × bases × periods), the cluster-specific values `theta`, the true memberships `clusters` and the B-spline basis matrix `B`.
+The object `sim` contains the simulated log-mortality array `log_m` (countries × ages × periods), the true country-specific coefficients `beta` (countries × bases × periods), the cluster-specific values `theta`, the true memberships `clusters` and the B-spline basis matrix `S`.
 
 ## 2. True local clustering structure
 
@@ -118,36 +123,57 @@ quantities of interest.
   generic entry is the proportion of samples in which countries `i` and `i'` share the same group.
   A single point estimate `c_jt` is then obtained by minimising the posterior expected variation of
   information (Wade & Ghahramani, 2018) — `minVI()` in the `mcclust.ext` package — using `P_jt` as
-  input. The result is stored in
-  `coclust_df.RDS`.
-- **the spline coefficients.** Point estimates for the country-specific trajectories
-  `beta_ijt = theta_{c_ijt, j, t}` are obtained as posterior means and stored in `beta_df.RDS` alongside the values used to generate the data.
+  input. The results are stored in `coclust.RDS`, together with the true cluster allocations.
+- **the spline coefficients.** Point estimates for the country-specific trajectories `beta_ijt = theta_{c_ijt, j, t}`
+  are obtained as posterior means and stored in `beta_countries.RDS` alongside the values used to generate the data.
 
 ```r
-## source("../main/gibbs_tRPM.R")
+source("../main/gibbs_tRPM.R")
 
-## fit         <- gibbs_tRPM(log_m = sim$log_m, ages = sim$ages, p = 6,
-##                           n_iter = 20000, burn_in = 10000, ...)
+out_MCMC <- run_model(Y = sim$log_m, ages = sim$ages,
+  n_iter = 2e4, print_step = 500,
+  a_alpha = 0.01, b_alpha = 1, a_delta = 0.001, b_delta = 0.001, 
+  a_omega = 0.001, b_omega = 0.001,
+  name_save = "res_simstudy_scenario1.RDS")
 
-## coclust_df  <- summarise_clusters(fit, clusters_true = clusters)   ## via minVI
-## beta_df     <- summarise_beta(fit, beta_true = sim$beta)
+burnin = 1:1e4
 
-## saveRDS(coclust_df, "coclust_df.RDS")
-## saveRDS(beta_df,    "beta_df.RDS")
+# Inference on partition
+psm               <- compute_prob_coclust(import = FALSE, save = FALSE, draws = out_MCMC$res$labels, burnin = burnin)
+ppe               <- compute_partition_point_est(psm = psm, draws = out_MCMC$res$labels, save = FALSE, burnin = burnin)
+summary_partition <- summarise_clusters(ppe = ppe, psm = psm, clusters_true = clusters)
+coclust           <- list(psm = psm, ppe = ppe, true = clusters)
+
+# Inference on individual coefficients
+beta_est       <- compute_beta_units(draws_beta = out_MCMC$res$beta, draws_labs = out_MCMC$res$labels, burnin = burnin)
+beta_countries <- summarise_beta(beta_est, sim$beta)
+
+saveRDS(coclust, "coclust.RDS")
+saveRDS(beta_countries, "beta_countries.RDS")
 ```
 
 > **Note.** To be added
 
 ## 4. Co-clustering
 
-*To be completed once `coclust_df.RDS` is available.* This section will compare the estimated
-partitions with the true ones displayed in Section 2, and report the co-clustering accuracies of
-Table 1 of the paper, i.e. the posterior mean, for each pair `(j, t)`, of the percentage of pairs of
+This section compares the estimated posterior similarity matrices with the true partitions displayed in Section 2, 
+and report the co-clustering accuracies of Table 1 of the paper, i.e. the posterior mean, for each pair `(j, t)`, of the percentage of pairs of
 countries that are correctly co-clustered.
+
+```r
+summary_partition <- summarise_clusters(ppe = ppe, psm = psm, clusters_true = clusters)
+summary_partition$psm_acc
+
+# Prepare Tex table (Table 1 in the manuscript)
+toTex <- matrix(round(summary_partition$psm_acc, 3), nrow = p, ncol = TT)
+rownames(toTex) <- paste0("Spline ", 1:p, " $(j = ", 1:p, ")$")
+colnames(toTex) <- paste0("$t=", 1:TT, "$")
+print(xtable::xtable(toTex, align = rep("c", 11)), sanitize.text.function = identity)
+```
 
 ## 5. Estimated versus true coefficients
 
-The file `beta_df.RDS` stores, for every country (`Unit`), spline basis (`Spline`) and period
+The file `beta_countries.RDS` stores, for every country (`Unit`), spline basis (`Spline`) and period
 (`Year`), the posterior mean of the country-specific coefficient (`Beta_est`) alongside the value
 used to generate the data (`Beta_true`).
 
