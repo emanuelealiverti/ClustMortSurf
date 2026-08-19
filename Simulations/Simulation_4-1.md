@@ -205,30 +205,29 @@ The figure below (Figure 4 in the paper) compares the estimated trajectories (li
 ones (triangles), with one panel per country and one colour per spline basis.
 
 ```r
-beta_df$Unit   <- gsub("Unit", "Country ", beta_df$Unit)
-beta_df$Spline <- gsub("Spline", "Spline ", beta_df$Spline)
+beta_countries$Unit   <- gsub("Unit", "Country ", beta_countries$Unit)
+beta_countries$Spline <- gsub("Spline", "Spline ", beta_countries$Spline)
 
-beta_pl <- ggplot(beta_df) +
-  geom_line(aes(Year, Beta_est, col = Spline), alpha = .9,
+beta_pl <- ggplot(beta_countries) +
+  geom_line(aes(x = Year, y = Post_Mean, col = Unit), alpha = .9,
             show.legend = FALSE, linewidth = .9) +
-  geom_point(aes(Year, Beta_true, col = Spline), size = 2, shape = "triangle") +
-  facet_wrap(~Unit, scales = "free") +
+  geom_point(aes(Year, Beta_true, col = Unit), size = 2, shape = "triangle") +
+  geom_ribbon(aes(x = Year, ymin = Post_q025, ymax = Post_q975, fill = Unit),
+              alpha = .2, show.legend = FALSE) +
+  facet_wrap(~Spline, scales = "free") +
   theme_bw(base_size = 14) +
   scale_x_continuous(breaks = 1:10) +
   scale_color_manual(values = gb) +
+  scale_fill_manual(values = gb) +
   guides(color = guide_legend(title = NULL,
                               override.aes = list(shape = 22, size = 5, fill = gb))) +
   theme(panel.grid.minor  = element_blank(),
         strip.background  = element_rect(fill = "grey70"),
         legend.background = element_rect(fill = "grey", color = "black"),
         legend.key        = element_rect(fill = "white"),
-        legend.position   = "right",
+        legend.position   = "bottom",
         legend.direction  = "horizontal") +
   xlab("Time") + ylab("Coefficients")
-
-## the legend is moved into the empty panel of the facet grid
-beta_pl <- lemon::reposition_legend(beta_pl, "center", panel = "panel-3-2",
-                                    plot = FALSE)
 
 ggsave(beta_pl, file = "img/sim_beta.png", width = 14, height = 7, dpi = 150)
 ```
