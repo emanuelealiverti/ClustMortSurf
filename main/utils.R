@@ -380,10 +380,11 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
     TT <- dim(draws_labs[[1]])[2]
     p <- length(draws_labs)
     
-    beta_units  <- array(NA_real_, dim = c(n, p, TT),
-                         dimnames = list(paste0("Unit", seq_len(n)),
-                                         paste0("Spline", seq_len(p)),
-                                         seq_len(TT)))
+    mean <- 
+      q025 <- q975 <- array(NA_real_, dim = c(n, p, TT),
+                            dimnames = list(paste0("Unit", seq_len(n)),
+                                            paste0("Spline", seq_len(p)),
+                                            seq_len(TT)))
     
     for (j in 1:p){
       
@@ -399,10 +400,14 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
         # Work with vector version of b and l for faster execution
         l_vec = c(l) + rep((nrow(l))*(1:ncol(l)-1), each = nrow(l))
         b_vec = c(b)
-        beta_units[, j, t] <- rowMeans(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)))
+        mean[, j, t] <- rowMeans(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)))
+        q025[, j, t] <- apply(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)), 1, quantile, probs = 0.025)
+        q975[, j, t] <- apply(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)), 1, quantile, probs = 0.975)
       }
       
     }
+    
+    beta_units <- list(Post_Mean = mean, Post_q025 = q025, Post_q975 = q975)
     if (save){saveRDS(beta_units, paste0(gender, "/beta_units.rds"))}
   }
   
@@ -425,13 +430,20 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
 
 summarise_beta <- function(estimated, true){
   
-  require(dplyr)
-  require(reshape2)
+  library(dplyr)
+  library(purrr)
+  library(tidyr)
   
-  names(dimnames(estimated)) = names(dimnames(true)) = c("Unit", "Spline", "Year")
-  beta_df <- full_join(melt(estimated, value.name = "Beta_est"),
-                              melt(true, value.name = "Beta_true"),
-                              by = c("Unit", "Spline", "Year"))
+  names(dimnames(true)) = c("Unit", "Spline", "Year")
+  
+  est_df <- map_dfr(estimated, ~ as.data.frame.table(.x), .id = "index") %>%
+    pivot_wider(names_from = index, values_from = Freq) %>%
+    rename(Unit = Var1, Spline = Var2, Year = Var3) %>%
+    mutate(Year = as.numeric(Year))
+  
+  beta_df <- full_join(est_df,
+                       melt(true, value.name = "Beta_true"),
+                       by = c("Unit", "Spline", "Year"))
   
   
 }
