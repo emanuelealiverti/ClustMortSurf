@@ -189,13 +189,15 @@ used to generate the data (`Beta_true`).
 ```r
 beta_countries <- readRDS("beta_countries.RDS")
 head(beta_countries)
-#    Unit  Spline Year  Beta_est Beta_true
-# 1 Unit1 Spline1    1 -4.384382 -4.433928
-# 2 Unit2 Spline1    1 -4.383117 -4.433928
-# 3 Unit3 Spline1    1 -4.386075 -4.433928
-# 4 Unit4 Spline1    1 -3.859353 -3.860657
-# 5 Unit5 Spline1    1 -3.860789 -3.860657
-# 6 Unit1 Spline2    1 -6.851310 -6.904459
+# A tibble: 6 × 7
+  Unit      Spline    Year Post_Mean Post_q025 Post_q975 Beta_true
+  <chr>     <chr>    <dbl>     <dbl>     <dbl>     <dbl>     <dbl>
+1 Country 1 Spline 1     1     -4.38     -4.44     -4.32     -4.43
+2 Country 2 Spline 1     1     -4.38     -4.44     -4.32     -4.43
+3 Country 3 Spline 1     1     -4.39     -4.45     -4.33     -4.43
+4 Country 4 Spline 1     1     -3.86     -3.93     -3.79     -3.86
+5 Country 5 Spline 1     1     -3.86     -3.93     -3.79     -3.86
+6 Country 1 Spline 2     1     -6.85     -6.90     -6.80     -6.90
 ```
 
 The figure below (Figure 4 in the paper) compares the estimated trajectories (lines) with the true
