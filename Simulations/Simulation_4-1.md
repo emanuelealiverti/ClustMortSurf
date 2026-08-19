@@ -23,7 +23,7 @@ source("../main/simulate_data.R")
 set.seed(4321)
 
 ## Common palette for clusters and spline bases
-gb <- paste0("#", c("fb4934", "b8bb26", "fabd2f", "83a598", "d3869b", "8ec07c"))
+gb <- paste0("#", c("fb4934", "b8bb26", "fabd2f", "83a598", "d3869b"))
 ```
 
 ---
