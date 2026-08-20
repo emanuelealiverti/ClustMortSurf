@@ -1,8 +1,8 @@
-############################################################################
-## Implementation of the full-conditional updates and the Gibbs sampler   ##
-## routine for "Bayesian local clustering of age-period mortality         ##
-## surface across multiple countries" (Romanò, Aliverti and Durante)      ##
-############################################################################
+###################################################################################
+## Implementation of the full-conditional updates and the Gibbs sampler          ##
+## routine for "Bayesian local clustering of age-period mortality                ##
+## surface across multiple countries" (Romanò, Aliverti and Durante, 2025+)      ##
+###################################################################################
 
 
 

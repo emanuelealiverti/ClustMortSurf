@@ -209,7 +209,7 @@ simulate_scenario_4_1 <- function(n               = 5,
   }
   
   ## log-mortality surfaces plus Gaussian noise
-  log_m <- array(NA_real_, dim = c(n, length(ages), TT),
+  log_m <- array(NA, dim = c(n, length(ages), TT),
                  dimnames = list(paste0("Unit", seq_len(n)), ages, seq_len(TT)))
   # for (t in seq_len(TT)) {
   #   f <- beta[, , t] %*% t(S)                       # n x |X|

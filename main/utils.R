@@ -4,8 +4,19 @@
 ## across multiple countries" (Romanò, Aliverti and Durante)              ##
 ############################################################################
 
+## ----------------------------------------------------------------------
+## Load all required libraries
+## ----------------------------------------------------------------------
+require(ggplot2)
 require(mvnfast)
-
+require(mcclust)
+require(mcclust.ext)
+require(dplyr)
+require(purrr)
+require(tidyr)
+require(reshape2)
+require(multvardiv)
+require(aricode)
 
 
 ## ----------------------------------------------------------------------
@@ -18,10 +29,10 @@ require(mvnfast)
 ## Value: inverted matrix.
 
 mysolve <- function(x){
-  
-  inv_x = chol2inv(chol(x))
-  
-  return(inv_x)
+
+	inv_x = chol2inv(chol(x))
+
+	return(inv_x)
 }
 
 
@@ -36,14 +47,14 @@ mysolve <- function(x){
 ## Value: list of vectors corresponding to sets in partition.
 
 lab2rho <- function(labels){
-  
-  # Number of tables 
-  nTbl <- max(labels)
-  
-  # Partition sets representation
-  rho <- lapply(1:nTbl, function(t) which(labels == t)) 
-  
-  return(rho)
+
+	# Number of tables 
+	nTbl <- max(labels)
+
+	# Partition sets representation
+	rho <- lapply(1:nTbl, function(t) which(labels == t)) 
+
+	return(rho)
 }
 
 
@@ -58,16 +69,16 @@ lab2rho <- function(labels){
 ## Value: vector of membership labels.
 
 rho2lab <- function(rho){
-  
-  # Number of entities in the partition
-  n <- max(unlist(rho))
-  
-  # Partition labels representation
-  labels <- vapply(1:n, 
-                   function(x) which(vapply(rho, is.element, el = x, FUN.VALUE = FALSE)), 
-                   FUN.VALUE = integer(1))
-  
-  return(labels)
+
+	# Number of entities in the partition
+	n <- max(unlist(rho))
+
+	# Partition labels representation
+	labels <- vapply(1:n, 
+			 function(x) which(vapply(rho, is.element, el = x, FUN.VALUE = FALSE)), 
+			 FUN.VALUE = integer(1))
+
+	return(labels)
 }
 
 
@@ -83,16 +94,15 @@ rho2lab <- function(rho){
 ## vector size.
 
 dCRP <- function(size, M){
-  
-  require(mggd)
-  
-  # Remove empty clusters, if any
-  size <- size[size>0]
-  
-  # Compute CRP pmf
-  pmf = M^NROW(size) * prod(factorial(size - 1)) / pochhammer(M, sum(size))
-  
-  return(pmf)
+
+
+	# Remove empty clusters, if any
+	size <- size[size>0]
+
+	# Compute CRP pmf
+	pmf = M^NROW(size) * prod(factorial(size - 1)) / pochhammer(M, sum(size))
+
+	return(pmf)
 }
 
 
@@ -107,28 +117,28 @@ dCRP <- function(size, M){
 ##
 ## Value: a list with the sets representation of the sampled partition.
 rCRP <- function(n, M){
-  
-  # Initialize labels vector
-  labels <- rep(0, n)
-  
-  # Allocation first unit
-  labels[1] <- 1
-  
-  for (dnr in 2:n) {
-    
-    # Compute occupation probabilities for current diner
-    vOcc <- table(labels[1:(dnr-1)])
-    vProb <- c(vOcc, M) / (dnr - 1 + M)
-    
-    # Add table label to diner
-    nTbl <- as.numeric(names(vOcc)[length(vOcc)]) 
-    labels[dnr] <- sample.int(nTbl+1, size=1, prob=vProb)
-  }
-  
-  nTbl <- max(c(nTbl, labels[n]))
-  rho <- lapply(1:nTbl, function(t) which(labels == t))
-  
-  return(rho)
+
+	# Initialize labels vector
+	labels <- rep(0, n)
+
+	# Allocation first unit
+	labels[1] <- 1
+
+	for (dnr in 2:n) {
+
+		# Compute occupation probabilities for current diner
+		vOcc <- table(labels[1:(dnr-1)])
+		vProb <- c(vOcc, M) / (dnr - 1 + M)
+
+		# Add table label to diner
+		nTbl <- as.numeric(names(vOcc)[length(vOcc)]) 
+		labels[dnr] <- sample.int(nTbl+1, size=1, prob=vProb)
+	}
+
+	nTbl <- max(c(nTbl, labels[n]))
+	rho <- lapply(1:nTbl, function(t) which(labels == t))
+
+	return(rho)
 }
 
 
@@ -149,10 +159,10 @@ rCRP <- function(n, M){
 ## Value: a scalar with the evalution of the squared exponential at d.
 
 sq_exp_ker <- function(d, l){
-  
-  sq_eval = exp(- d^2 / (2*l^2))
-  
-  return(sq_eval)
+
+	sq_eval = exp(- d^2 / (2*l^2))
+
+	return(sq_eval)
 }
 
 
@@ -172,43 +182,42 @@ sq_exp_ker <- function(d, l){
 ## Value: a list of 3D arrays containing co-clustering probabilities for each spline basis.
 
 compute_prob_coclust <- function(import = FALSE, save = FALSE, draws = NULL, burnin = NULL){
-  
-  require(mcclust)
-  
-  if (!import & is.null(draws)){stop("Please provide MCMC draws or select import = TRUE.")}
-  if (import & !is.null(draws)){warning("MCMC draws are provided even if import = TRUE.") }
-  
-  if (import){
-    
-    prob_coclust <- readRDS("psm.RDS")
-    
-  } else {
-    
-    n <- nrow(draws[[1]])
-    TT <- ncol(draws[[1]])
-    p <- length(draws)
-    
-    prob_coclust <- vector("list", p)
-    names(prob_coclust) <- paste0("Spline", seq_len(p))
-    
-    for (j in 1:p){
-      cat(j, "\t")
-      
-      ppc <- vapply(1:TT, 
-                    function(t) comp.psm(t(draws[[j]][, t, -burnin])),
-                    matrix(1, n, n))
-      
-      dimnames(ppc) <- list("Units" = paste0("Unit", seq_len(n)),
-                            "Units" = paste0("Unit", seq_len(n)),
-                            "Year" = 1:TT)
-      
-      prob_coclust[[j]] <- ppc
-    }
-    
-    if (save){saveRDS(prob_coclust, "psm.RDS")}
-  }
-  
-  return(prob_coclust)
+
+
+	if (!import & is.null(draws)){stop("Please provide MCMC draws or select import = TRUE.")}
+	if (import & !is.null(draws)){warning("MCMC draws are provided even if import = TRUE.") }
+
+	if (import){
+
+		prob_coclust <- readRDS("psm.RDS")
+
+	} else {
+
+		n <- nrow(draws[[1]])
+		TT <- ncol(draws[[1]])
+		p <- length(draws)
+
+		prob_coclust <- vector("list", p)
+		names(prob_coclust) <- paste0("Spline", seq_len(p))
+
+		for (j in 1:p){
+			cat(j, "\t")
+
+			ppc <- vapply(1:TT, 
+				      function(t) comp.psm(t(draws[[j]][, t, -burnin])),
+				      matrix(1, n, n))
+
+			dimnames(ppc) <- list("Units" = paste0("Unit", seq_len(n)),
+					      "Units" = paste0("Unit", seq_len(n)),
+					      "Year" = 1:TT)
+
+			prob_coclust[[j]] <- ppc
+		}
+
+		if (save){saveRDS(prob_coclust, "psm.RDS")}
+	}
+
+	return(prob_coclust)
 }
 
 
@@ -229,46 +238,44 @@ compute_prob_coclust <- function(import = FALSE, save = FALSE, draws = NULL, bur
 ## Value: a list of matrices with cluster label point estimates per unit and time point.
 
 compute_partition_point_est <- function(import = FALSE, save = FALSE, 
-                                        draws = NULL, psm = NULL, burnin = NULL){
-  
-  if (!import & is.null(draws)){stop("Please provide MCMC draws or select import = TRUE.")}
-  if (import & (!is.null(draws) | !is.null(psm))){
-    warning("MCMC draws and/or PSM are provided even if import = TRUE.")
-  }
-  
-  if (import){
-    
-    partition_point_est <- readRDS("ppe.RDS")
-    
-  } else {
-    
-    require(mcclust)
-    require(mcclust.ext)
-    
-    n <- dim(draws[[1]])[1]
-    TT <- dim(draws[[1]])[2]
-    p <- length(draws)
-    
-    partition_point_est <- vector("list", p)
-    names(partition_point_est) <- paste0("Spline", seq_len(p))
-    
-    for (j in 1:p){
-      cat(j, "\t")
-      
-      ppe <- vapply(1:TT, 
-                    function(t) my.minVI(t(draws[[j]][, t, -burnin]), psm[[j]][ , , t]),
-                    integer(n))
-      
-      dimnames(ppe) <- list("Units" = paste0("Unit", seq_len(n)),
-                            "Year" = 1:TT)
-      
-      partition_point_est[[j]] <- ppe
-    }
-    
-    if (save){saveRDS(partition_point_est, "ppe.RDS")}
-  }
-  
-  return(partition_point_est)
+					draws = NULL, psm = NULL, burnin = NULL){
+
+	if (!import & is.null(draws)){stop("Please provide MCMC draws or select import = TRUE.")}
+	if (import & (!is.null(draws) | !is.null(psm))){
+		warning("MCMC draws and/or PSM are provided even if import = TRUE.")
+	}
+
+	if (import){
+
+		partition_point_est <- readRDS("ppe.RDS")
+
+	} else {
+
+
+		n <- dim(draws[[1]])[1]
+		TT <- dim(draws[[1]])[2]
+		p <- length(draws)
+
+		partition_point_est <- vector("list", p)
+		names(partition_point_est) <- paste0("Spline", seq_len(p))
+
+		for (j in 1:p){
+			cat(j, "\t")
+
+			ppe <- vapply(1:TT, 
+				      function(t) my.minVI(t(draws[[j]][, t, -burnin]), psm[[j]][ , , t]),
+				      integer(n))
+
+			dimnames(ppe) <- list("Units" = paste0("Unit", seq_len(n)),
+					      "Year" = 1:TT)
+
+			partition_point_est[[j]] <- ppe
+		}
+
+		if (save){saveRDS(partition_point_est, "ppe.RDS")}
+	}
+
+	return(partition_point_est)
 }
 
 
@@ -284,62 +291,85 @@ compute_partition_point_est <- function(import = FALSE, save = FALSE,
 ##    psm      posterior similarity matrix; if NULL, computed on the fly
 ##
 ## Value: a vector of optimal cluster labels minimizing VI.
-
 my.minVI <- function(draws, psm = NULL){
-  
-  if (is.null(psm)){psm <- comp.psm(draws)}
-  start_set <- draws[sample(1:nrow(draws), 10, replace = FALSE), ]
-  
-  list_opt <- apply(start_set,
-                    1,
-                    function(start) minVI(psm = psm, 
-                                          method = "avg", 
-                                          max.k = nrow(psm),
-                                          start.cl = start))
-  pick <- which.max(sapply(list_opt, function(x) x$value))
-  out <- list_opt[[pick]]$cl
-  
-  return(out)
+
+	if (is.null(psm)){psm <- comp.psm(draws)}
+	start_set <- draws[sample(1:nrow(draws), 10, replace = FALSE), ]
+
+	list_opt <- apply(start_set,
+			  1,
+			  function(start) minVI(psm = psm, 
+						method = "avg", 
+						max.k = nrow(psm),
+						start.cl = start))
+	pick <- which.max(sapply(list_opt, function(x) x$value))
+	out <- list_opt[[pick]]$cl
+
+	return(out)
 }
 
 
 ## ----------------------------------------------------------------------
 ## Summarise estimates of cluster labels
 ## ----------------------------------------------------------------------
-## Evaluates clustering accuracy against a ground truth partition by computing
-## Normalized Variation of Information (NVI) accuracy for point estimate and PSM alignment.
+## Evaluates co-clustering accuracy against a ground truth partition. At each
+## MCMC iteration, the sampled partition is compared to the true one
+## for every spline basis and time point, obtaining a p x T matrix with the
+## proportion of correctly co-clustered pairs of units. The final accuracy is
+## the average of these matrices over the MCMC sample.
+## 
 ##
 ## Arguments
-##    ppe              list of estimated cluster label matrices (from compute_partition_point_est)
-##    psm              list of posterior similarity matrices (from compute_prob_coclust)
+##    draws            list of MCMC sample arrays for cluster allocations (units x years x MCMC iterations) (discarding burnin)
 ##    clusters_true    list of matrices containing true cluster memberships
+##    burnin           number of initial MCMC iterations to discard as burn-in
 ##
-## Value: a list containing matrices of PSM accuracy ('psm_acc') and PPE accuracy ('ppe_acc').
+## Value: a list containing the matrix of posterior mean co-clustering accuracy ('psm_acc').
 
-summarise_clusters <- function(ppe, psm, clusters_true){
-  
-  require(aricode)
-  
-  n <- nrow(ppe[[1]])
-  TT <- ncol(ppe[[1]])
-  p <- length(ppe)
-  
-  nvi <- matrix(NA_real_, p, TT)
-  psm_acc <- matrix(NA_real_, p, TT)
-  dimnames(nvi) <- dimnames(psm_acc) <- list("Spline" = paste0("Spline", seq_len(p)),
-                                             "Year" = 1:TT)
-  
-  for (j in seq_len(p)){
-    for (t in seq_len(TT)){
-      nvi[j, t] <- NVI(clusters_true[[j]][ , t], ppe[[j]][ , t])
-      adj_true <- 1*outer(clusters_true[[j]][ , t], clusters_true[[j]][ , t], "==")
-      diag(adj_true) <- 0
-      psm_acc[j, t] <- sum(adj_true*psm[[j]][ , , t] + (1-adj_true)*(1-psm[[j]][ , , t])) / (n*(n-1))
-    }
-  }
-  
-  return(list(psm_acc = psm_acc, ppe_acc = 1 - nvi))
-  
+summarise_clusters <- function(draws_full, clusters_true, burnin){
+
+
+	draws  <- lapply(draws_full, \(.l) .l[,,-burnin])
+	n <- dim(draws[[1]])[1]
+	TT <- dim(draws[[1]])[2]
+	p <- length(draws)
+	iters <- seq_len(dim(draws[[1]])[3])
+
+	# True co-clustering adjacency
+	# List of p matrices of size n x n x TT
+	adj_true <- vector("list", p)
+	for (j in seq_len(p)){
+		adj_true[[j]] <- vapply(seq_len(TT), function(t){
+			a <- 1*outer(clusters_true[[j]][ , t], clusters_true[[j]][ , t], "==")
+			diag(a) <- 0
+			a
+		}, matrix(0, n, n))
+	}
+
+	psm_acc <- matrix(0, p, TT) # computed recursively
+	dimnames(psm_acc) <- list("Spline" = paste0("Spline", seq_len(p)),
+				  "Year" = 1:TT)
+
+	for (it in iters){
+
+		# Proportion of correctly co-clustered pairs at this iteration, for every (spline, year)
+		acc_it <- matrix(NA, p, TT)
+		for (j in seq_len(p)){
+			labs_it <- draws[[j]][ , , it]
+			for (t in seq_len(TT)){
+				adj_it <- 1*outer(labs_it[ , t], labs_it[ , t], "==")
+				coclust_it  <- (adj_it == adj_true[[j]][,,t])
+				acc_it[j, t] <- mean(coclust_it[lower.tri(coclust_it)])
+			}
+		}
+
+		psm_acc <- psm_acc + acc_it
+	}
+
+	psm_acc <- psm_acc / length(iters)
+
+	return(psm_acc)
+
 }
 
 
@@ -357,56 +387,66 @@ summarise_clusters <- function(ppe, psm, clusters_true){
 ##    draws_labs    list of MCMC sample arrays for unit cluster assignments
 ##    burnin        number of initial MCMC iterations to discard as burn-in
 ##
-## Value: a 3D array of estimated unit-level spline coefficients (units x splines x years).
+## Value: a list of three 3D arrays (units x splines x years) with the posterior
+## means ('Post_Mean') and the lower ('Post_q025') and upper ('Post_q975')
+## endpoints of the 95% equal-tailed credible interval of the unit-level spline
+## coefficients.
 
 compute_beta_units <- function(import = FALSE, save = FALSE, 
-                               draws_beta = NULL, draws_labs = NULL, burnin = NULL){
-  
-  
-  if (!import & (is.null(draws_beta) | is.null(draws_labs))){
-    stop("Please provide MCMC draws or select import = TRUE.")
-  }
-  if (import & (!is.null(draws_labs) | !is.null(draws_beta))){
-    warning("MCMC draws are provided even if import = TRUE.")
-  }
-  
-  if (import){
-    
-    beta_units <- readRDS("beta_units.RDS")
-    
-  } else {
-    
-    n <- dim(draws_labs[[1]])[1]
-    TT <- dim(draws_labs[[1]])[2]
-    p <- length(draws_labs)
-    
-    beta_units  <- array(NA_real_, dim = c(n, p, TT),
-                         dimnames = list(paste0("Unit", seq_len(n)),
-                                         paste0("Spline", seq_len(p)),
-                                         seq_len(TT)))
-    
-    for (j in 1:p){
-      
-      cat(j, "\t")
-      
-      beta <- draws_beta[[j]][ , , -burnin]
-      labs <- draws_labs[[j]][ , , -burnin]
-      
-      
-      for (t in seq_len(TT)){
-        l <- labs[ , t, ]
-        b <- beta[ , t, ]
-        # Work with vector version of b and l for faster execution
-        l_vec = c(l) + rep((nrow(l))*(1:ncol(l)-1), each = nrow(l))
-        b_vec = c(b)
-        beta_units[, j, t] <- rowMeans(matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l)))
-      }
-      
-    }
-    if (save){saveRDS(beta_units, paste0(gender, "/beta_units.rds"))}
-  }
-  
-  return(beta_units)
+			       draws_beta = NULL, draws_labs = NULL, burnin = NULL){
+
+
+	if (!import & (is.null(draws_beta) | is.null(draws_labs))){
+		stop("Please provide MCMC draws or select import = TRUE.")
+	}
+	if (import & (!is.null(draws_labs) | !is.null(draws_beta))){
+		warning("MCMC draws are provided even if import = TRUE.")
+	}
+
+	if (import){
+
+		beta_units <- readRDS("beta_units.RDS")
+
+	} else {
+
+		n <- dim(draws_labs[[1]])[1]
+		TT <- dim(draws_labs[[1]])[2]
+		p <- length(draws_labs)
+
+		empty_array <- array(NA, dim = c(n, p, TT),
+				     dimnames = list(paste0("Unit", seq_len(n)),
+						     paste0("Spline", seq_len(p)),
+						     seq_len(TT)))
+		beta_units <- list(Post_Mean = empty_array, Post_q025 = empty_array, Post_q975 = empty_array)
+
+		for (j in 1:p){
+
+			cat(j, "\n")
+
+			beta <- draws_beta[[j]][ , , -burnin]
+			labs <- draws_labs[[j]][ , , -burnin]
+
+
+			for (t in seq_len(TT)){
+				l <- labs[ , t, ]
+				b <- beta[ , t, ]
+				# Work with vector version of b and l for faster execution
+				l_vec = c(l) + rep((nrow(l))*(1:ncol(l)-1), each = nrow(l))
+				b_vec = c(b)
+				# Unit-level draws of beta_ijt: units on rows, retained iterations on columns
+				draws_units <- matrix(b_vec[l_vec], nrow = nrow(l), ncol = ncol(l))
+
+				beta_units$Post_Mean[, j, t] <- rowMeans(draws_units)
+				ci <- apply(draws_units, 1, quantile, probs = c(0.025, 0.975), names = FALSE)
+				beta_units$Post_q025[, j, t] <- ci[1, ]
+				beta_units$Post_q975[, j, t] <- ci[2, ]
+			}
+
+		}
+		if (save){saveRDS(beta_units, "beta_units.RDS")}
+	}
+
+	return(beta_units)
 }
 
 
@@ -418,20 +458,29 @@ compute_beta_units <- function(import = FALSE, save = FALSE,
 ## a single tidy data frame for post-estimation comparison and plotting.
 ##
 ## Arguments
-##    estimated    3D array of estimated unit spline coefficients (from compute_beta_units)
+##    estimated    list with the 3D arrays 'Post_Mean', 'Post_q025' and 'Post_q975'
+##                 of estimated unit spline coefficients (from compute_beta_units)
 ##    true         3D array of true unit spline coefficients
 ##
-## Value: a data frame joining estimated and true coefficients by Unit, Spline, and Year.
+## Value: a data frame joining estimated and true coefficients by Unit, Spline and
+## Year, with the posterior mean ('Post_Mean'), the 95% credible interval
+## endpoints ('Post_q025', 'Post_q975') and the true value ('Beta_true').
 
 summarise_beta <- function(estimated, true){
-  
-  require(dplyr)
-  require(reshape2)
-  
-  names(dimnames(estimated)) = names(dimnames(true)) = c("Unit", "Spline", "Year")
-  beta_df <- full_join(melt(estimated, value.name = "Beta_est"),
-                              melt(true, value.name = "Beta_true"),
-                              by = c("Unit", "Spline", "Year"))
-  
-  
+
+
+	stopifnot(all(c("Post_Mean", "Post_q025", "Post_q975") %in% names(estimated)))
+
+	names(dimnames(true)) <- c("Unit", "Spline", "Year")
+
+	est_df <- map_dfr(estimated, ~ as.data.frame.table(.x), .id = "index") %>%
+		pivot_wider(names_from = index, values_from = Freq) %>%
+		rename(Unit = Var1, Spline = Var2, Year = Var3) %>%
+		mutate(Year = as.numeric(Year))
+
+	beta_df <- full_join(est_df,
+			     melt(true, value.name = "Beta_true"),
+			     by = c("Unit", "Spline", "Year"))
+
+	return(beta_df)
 }

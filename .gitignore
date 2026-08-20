@@ -40,3 +40,6 @@ Rplots.pdf
 
 # macOS
 .DS_Store
+
+# RDS with mcmc output
+Simulations/res_simstudy_*.RDS
