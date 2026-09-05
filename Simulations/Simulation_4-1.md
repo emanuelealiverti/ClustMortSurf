@@ -87,8 +87,6 @@ On a `M5` Mac-Air with an optimized `openblas` library (0.3.33) the running time
 ``` r
 out_MCMC <- run_model(Y = sim$log_m, ages = sim$ages,
   n_iter = 2e4, print_step = 500,
-  a_alpha = 0.01, b_alpha = 1, a_delta = 0.001, b_delta = 0.001,
-  a_omega = 0.001, b_omega = 0.001,
   name_save = "res_simstudy_scenario1.RDS")
 
 burnin = 1:1e4
