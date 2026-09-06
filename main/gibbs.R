@@ -336,6 +336,7 @@ up_M <- function(gamma_j, labels_j, M_j,
 ## Arguments
 ##    Y           list of observation matrices, one per country/unit, 
 ##                with dimensions (time_points x ages)
+##    ages        vector with ages for which mortality rates are observed      
 ##    seed        random seed for reproducibility
 ##    a_sigma     shape hyperparameter for inverse-gamma prior on observation variance
 ##    b_sigma     rate hyperparameter for inverse-gamma prior on observation variance
