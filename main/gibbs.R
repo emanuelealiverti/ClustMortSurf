@@ -336,7 +336,8 @@ up_M <- function(gamma_j, labels_j, M_j,
 ## Arguments
 ##    Y           list of observation matrices, one per country/unit, 
 ##                with dimensions (time_points x ages)
-##    ages        vector with ages for which mortality rates are observed      
+##    ages        vector with ages for which mortality rates are observed 
+##    knots       vector with knots for B-Spline construction
 ##    seed        random seed for reproducibility
 ##    a_sigma     shape hyperparameter for inverse-gamma prior on observation variance
 ##    b_sigma     rate hyperparameter for inverse-gamma prior on observation variance
@@ -358,7 +359,7 @@ up_M <- function(gamma_j, labels_j, M_j,
 ##        ('parameters'), input data ('data'), and fitted metadata ('other').
 
 run_model <- function(Y,
-                      ages,
+                      ages, knots,
                       seed = 4238,
                       a_sigma = 0.001, b_sigma = 0.001,
                       a_alpha = 1, b_alpha = 1,
@@ -382,7 +383,7 @@ run_model <- function(Y,
   ages_no0 <- ages[ages!= 0]
   
   # Construct spline basis functions over ages
-  S <- spline_basis(ages = ages_no0, knots = c(20, 40))
+  S <- spline_basis(ages = ages_no0, knots = knots)
   
   # ----------------------------------------------------------------------
   # Model Dimensions and Covariance Matrix Initialization
