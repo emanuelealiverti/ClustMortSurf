@@ -85,7 +85,7 @@ The chunk below runs the Gibbs sampler and saves the full output in the file `re
 On a `M5` Mac-Air with an optimized `openblas` library (0.3.33) the running time is about 3 minutes.
 
 ``` r
-out_MCMC <- run_model(Y = sim$log_m, ages = sim$ages,
+out_MCMC <- run_model(Y = sim$log_m, ages = sim$ages, knots = c(20, 40),
   n_iter = 2e4, print_step = 500,
   name_save = "res_simstudy_scenario1.RDS")
 
