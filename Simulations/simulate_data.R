@@ -13,10 +13,10 @@
 ##
 ## Arguments
 ##
-##    ages: a vector of age values
-##    p: the number of B-spline bases
-##    knots: a vector of knots for the B-spline bases; if NULL, p equally spaced.
-##    degree: the degree of the B-spline bases
+##    ages    a vector of age values
+##    p      the number of B-spline bases
+##    knots  a vector of knots for the B-spline bases; if NULL, p equally spaced.
+##    degree the degree of the B-spline bases
 ##
 ## Value: a matrix of dimension length(ages) x p containing the B-spline bases 
 ## evaluated at the ages.
