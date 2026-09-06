@@ -378,7 +378,6 @@ run_model <- function(Y,
   # ----------------------------------------------------------------------
   # B-Spline basis matrix setup
   # ----------------------------------------------------------------------
-  ages <- 0:100
   ages_no0 <- ages[ages!= 0]
   
   # Construct spline basis functions over ages
