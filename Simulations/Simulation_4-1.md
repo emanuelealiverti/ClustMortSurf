@@ -6,7 +6,7 @@ This tutorial reproduces the simulation scenario presented in Section 4.1 of the
 
 We focus on artificial mortality rates for `n = 5` synthetic countries, observed over `T = 10` periods and for the ages `X = {0, 1, ..., 100}`.
 
-The code is meant to be run from within this folder (\[`Simulations/`\]), and the core routines are sourced from [`main/`](../main).
+The code is meant to be run from within this folder ([`Simulations/`](.)), and the core routines are sourced from [`main/`](../main).
 
 ``` r
 # Gibbs sampler utilities
@@ -18,12 +18,12 @@ source("../main/utils.R")
 
 ## 1. Data-generating mechanism
 
-Data are generated directly from the model proposed in the paper — as implemented in [`simulate_data.R`](simulate_data.R). Under the proposed specification, the age structure of mortality in each country and calendar year is constructed by a B-spline expansion, whose country-specific coefficients are **tied** whenever two countries belong to the same cluster at a given pair (basis `j`, calendar year `t`). In this simulated scenario, the local partitions are fixed at prespecified levels, centering the cluster-specific coefficients around simple linear trends in time.
+Data are generated directly from the model proposed in the paper — as implemented in [`simulate_data.R`](simulate_data.R). Under the proposed specification, the age structure of mortality in each country and calendar year is constructed by a B-spline expansion, whose country-specific coefficients are *tied* whenever two countries belong to the same cluster at a given pair (basis `j`, calendar year `t`). In this simulated scenario, the local partitions are fixed at prespecified levels, centering the cluster-specific coefficients around simple linear trends in time.
 
 The cluster memberships $c_{jt}$ are manually set in order to span a wide spectrum of time-varying local grouping patterns (see Figure below); more specifically:
 
 - **bases 1, 2 and 5** exhibit a single, structural change of the partition between `t = 5` and `t = 6`;
-- **bases 3 and 4** produce stable clusters over time (all countries separated for basis 3, and a single country isolated from the others for basis 4)
+- **bases 3 and 4** produce stable clusters over time (all countries separated for basis 3, and a single country isolated from the others for basis 4).
 - **basis 6** is the most challenging regime, with all the countries changing group membership frequently across the whole time window.
 
 ``` r
@@ -63,31 +63,32 @@ clust_pl <- ggplot(df_pl) +
   scale_y_discrete(expand = expansion(add = c(0.55))) +
   scale_fill_manual(values = gb) +
   xlab("Time") + ylab("Countries")
-
-# plot(clust_pl)
-
-ggsave(clust_pl, file = "img/sim_setting.png", width = 15, height = 7, dpi = 150)
 ```
 
 ![True cluster assignments in the simulation study](img/sim_setting.png)
 
 ## 2. Posterior computation
 
-Posterior inference proceeds under the model proposed in Section 2 of the manuscript with diffuse hyperparameters `a = b = a_tau = b_tau = a_lambda = b_lambda = 1e-3`, `a_M = 2e-3`, `b_M = 1e-3` and `a_alpha = b_alpha = 1`. The entries of the GP covariance matrix on the coefficients’ means (eq (4) of the manuscript) are defined through a squared-exponential kernel with length scale `1.5`, while the mean vectors $\mu_j$ are elicited in a data-driven manner: for each period, the spline coefficients are first estimated via OLS under, and then smoothed over time via LOESS; refer to Section 4.1 of the manuscript for further details on this strategy.
+Posterior inference proceeds under the model proposed in Section 2 of the manuscript with diffuse hyperparameters `a = b = a_tau = b_tau = a_lambda = b_lambda = 1e-3`, `a_M = 2e-3`, `b_M = 1e-3` and `a_alpha = b_alpha = 1`. The entries of the GP covariance matrix on the coefficients’ means (eq (4) of the manuscript) are defined through a squared-exponential kernel with length scale `1.5`, while the mean vectors $\mu_j$ are elicited in a data-driven manner: for each period, the spline coefficients are first estimated via OLS and then smoothed over time via LOESS; refer to Section 4.1 of the manuscript for further details on this strategy.
 
-The Gibbs sampler is run for `20000` iterations, discarding the first `10000` as a burn-in. The retained samples are then summarised into two quantities of interest:
+The Gibbs sampler is run for `20000` iterations, discarding the first `10000` as a burn-in. Posterior samples are then summarized into two quantities of interest:
 
-- **the cluster memberships.** For each basis `j = 1, ..., 6` and period `t = 1, ..., 10`, a single point estimate $\hat{c}_{jt}$ is obtained by minimising the posterior expected variation of information (Wade & Ghahramani, 2018), using the function `minVI()` in the `mcclust.ext` package. The resulting partitions are stored in `coclust.RDS`, together with the true cluster allocations. In order to provide a comprehensive assessment for the clustering accuracy, the posterior mean of the percentage of pairs of countries that are correctly co-clustered is also computed.
-- **the spline coefficients.** Point and $95\%$ interval estimates for the time- and country-specific coefficients are obtained as posterior means and quantile-base intervals, and stored in `beta_countries.RDS`
+- **cluster memberships**. For each basis `j = 1, ..., 6` and period `t = 1, ..., 10`, a single point estimate $\hat{c}_{jt}$ is obtained by minimizing the posterior expected variation of information (Wade & Ghahramani, 2018), using the function `minVI()` in the `mcclust.ext` package. The resulting partitions are stored in `coclust.RDS`, together with the true cluster allocations. In order to provide a comprehensive assessment for the clustering accuracy, the posterior mean of the percentage of pairs of countries that are correctly co-clustered is also computed.
+- **spline coefficients**. Point and $95\%$ interval estimates for the time- and country-specific coefficients are obtained as posterior means and quantile-based intervals, and stored in `beta_countries.RDS`
 
-The chunk below runs the Gibbs sampler and saves the full output in the file `res_simstudy_scenario1.RDS` (currently gitignored). The outputs of interest are post-processed into the files `coclust.RDS` and `beta_countries.RDS`, as described below.
+The chunk below runs the Gibbs sampler and saves the full output in the file `res_simstudy_scenario1.RDS`. The outputs of interest are post-processed into the files `coclust.RDS` and `beta_countries.RDS`.
 
-On a `M5` Mac-Air with an optimized `openblas` library (0.3.33) the running time is about 3 minutes.
+On a `M5` Mac-Air with an optimized `openblas` library the running time is about 3 minutes.
 
 ``` r
 out_MCMC <- run_model(Y = sim$log_m, ages = sim$ages, knots = c(20, 40),
-  n_iter = 2e4, print_step = 500,
-  name_save = "res_simstudy_scenario1.RDS")
+                      a_sigma = 0.001, b_sigma = 0.001,
+                      a_alpha = 1, b_alpha = 1,
+                      a_delta = 0.001, b_delta = 0.001,
+                      a_omega = 0.001, b_omega = 0.001,
+              n_iter = 2e4, print_step = 500, 
+              seed = 4238,
+              name_save = "res_simstudy_scenario1.RDS")
 
 burnin = 1:1e4
 
@@ -120,16 +121,16 @@ knitr::kable(coclust$psm_acc, digits = 3, caption = "Posterior means of co-clust
 
 |         |     1 |     2 |     3 |     4 |     5 |     6 |     7 |     8 |     9 |    10 |
 |:--------|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|
-| Spline1 | 0.994 | 1.000 | 1.000 | 0.987 | 0.952 | 1.000 | 1.000 | 1.000 | 1.000 | 0.999 |
-| Spline2 | 1.000 | 1.000 | 1.000 | 1.000 | 0.999 | 0.991 | 1.000 | 1.000 | 1.000 | 0.998 |
+| Spline1 | 0.992 | 0.999 | 0.997 | 0.985 | 0.945 | 1.000 | 1.000 | 1.000 | 1.000 | 0.999 |
+| Spline2 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.992 | 1.000 | 1.000 | 1.000 | 0.999 |
 | Spline3 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
-| Spline4 | 0.999 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.999 |
-| Spline5 | 0.999 | 0.999 | 1.000 | 0.998 | 0.992 | 0.998 | 1.000 | 1.000 | 1.000 | 0.997 |
-| Spline6 | 0.942 | 0.917 | 0.965 | 0.964 | 0.984 | 0.981 | 0.979 | 0.976 | 0.988 | 0.990 |
+| Spline4 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.999 | 1.000 | 0.998 | 1.000 |
+| Spline5 | 0.999 | 1.000 | 1.000 | 0.998 | 0.990 | 0.997 | 1.000 | 1.000 | 1.000 | 0.998 |
+| Spline6 | 0.949 | 0.937 | 0.987 | 0.985 | 0.994 | 0.994 | 0.991 | 0.988 | 0.997 | 0.998 |
 
 Posterior means of co-clustering accuracies for each combination (j, t).
 
-The figure below (Figure 4 in the paper) compares the estimated dynamic spline coefficients (lines) and their $95%$ credible intervals (ribbons) with the true ones (triangles), with one panel per spline basis and one colour per country.
+The figure below (Figure 4 in the paper) compares the estimated dynamic spline coefficients (lines) and their $95\%$ credible intervals (ribbons) with the true values (triangles), with one panel per spline basis and one colour per country.
 
 ``` r
 beta_df <- readRDS("beta_countries.RDS")
@@ -140,8 +141,8 @@ beta_pl <- ggplot(beta_df) +
   geom_ribbon(aes(Year, ymin = Post_q025, ymax = Post_q975, fill = Unit),
               alpha = .25, show.legend = FALSE) +
   geom_line(aes(Year, Post_Mean, col = Unit), alpha = .9,
-            show.legend = FALSE, linewidth = .9) +
-  geom_point(aes(Year, Beta_true, col = Unit), size = 2, shape = "triangle") +
+            show.legend = FALSE) +
+  geom_point(aes(Year, Beta_true, col = Unit), shape = "triangle") +
   facet_wrap(~Spline, scales = "free") +
   theme_bw(base_size = 14) +
   scale_x_continuous(breaks = 1:10) +
@@ -156,8 +157,6 @@ beta_pl <- ggplot(beta_df) +
         legend.position   = "bottom",
         legend.direction  = "horizontal") +
   xlab("Time") + ylab("Coefficients")
-# plot(beta_pl)
-ggsave(beta_pl, file = "img/sim_beta.png", width = 14, height = 7, dpi = 150)
 ```
 
 ![Estimated and true B-spline coefficients](img/sim_beta.png)
