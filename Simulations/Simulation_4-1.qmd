@@ -102,7 +102,7 @@ The Gibbs sampler is run for `20000` iterations, discarding the first `10000` as
 Posterior samples are then summarized into two quantities of interest:
 
 - **cluster memberships**. For each basis `j = 1, ..., 6` and period `t = 1, ..., 10`, a single point estimate $\hat{c}_{jt}$ is obtained by minimizing the posterior expected variation of information (Wade & Ghahramani, 2018), using the function `minVI()` in the `mcclust.ext` package. The resulting partitions are stored in `coclust.RDS`, together with the true cluster allocations. In order to provide a comprehensive assessment for the clustering accuracy, the posterior mean of the percentage of pairs of countries that are correctly co-clustered is also computed.
-- **spline coefficients**. Point and $95\%$ interval estimates for the time- and country-specific coefficients are obtained as posterior means and quantile-based intervals, and stored in `beta_countries.RDS`
+- **spline coefficients**. Point and 95% interval estimates for the time- and country-specific coefficients are obtained as posterior means and quantile-based intervals, and stored in `beta_countries.RDS`
 
 The chunk below runs the Gibbs sampler and saves the full output in the file `res_simstudy_scenario1.RDS`. The outputs of interest are post-processed into the files `coclust.RDS` and `beta_countries.RDS`.
 
@@ -152,7 +152,7 @@ coclust <- readRDS("coclust.RDS")
 knitr::kable(coclust$psm_acc, digits = 3, caption = "Posterior means of co-clustering accuracies for each combination (j, t).")
 ```
 
-The figure below (Figure 4 in the paper) compares the estimated dynamic spline coefficients (lines) and their $95\%$ credible intervals (ribbons) with the true values (triangles), with one panel per spline basis and one colour per country.
+The figure below (Figure 4 in the paper) compares the estimated dynamic spline coefficients (lines) and their 95% credible intervals (ribbons) with the true values (triangles), with one panel per spline basis and one colour per country.
 
 
 ```{r}
