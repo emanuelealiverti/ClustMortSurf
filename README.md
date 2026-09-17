@@ -10,6 +10,7 @@ The paper develops a Bayesian model for multi-country log-mortality surfaces, in
 
 ```
 .
+├── LICENSE                  MIT license
 ├── main/                    
 │   ├── gibbs.R              Gibbs sampler functions
 │   └── utils.R              Utility functions for both Gibbs sampler and results extraction
@@ -25,3 +26,6 @@ The paper develops a Bayesian model for multi-country log-mortality surfaces, in
 - **[`main/`](main)** collects the core functions implementing the Gibbs sampling algorithm (presented in Section 3.1 of the manuscript) and various utilities for post-processing
 - **[`Simulations/`](Simulations)** contains the tutorial [`Simulation_4-1.md`](Simulations/Simulation_4-1.md), functions to run the MCMC sampling, post-process the output and reproduce figures and tables associated to the simulation study
 
+## License
+
+The code in this repository is released under the [MIT License](LICENSE).

@@ -69,7 +69,7 @@ clust_pl <- ggplot(df_pl) +
 
 ## 2. Posterior computation
 
-Posterior inference proceeds under the model proposed in Section 2 of the manuscript with diffuse hyperparameters `a = b = a_tau = b_tau = a_lambda = b_lambda = 1e-3`, `a_M = 2e-3`, `b_M = 1e-3` and `a_alpha = b_alpha = 1`. The entries of the GP covariance matrix on the coefficients’ means (eq (4) of the manuscript) are defined through a squared-exponential kernel with length scale `1.5`, while the mean vectors $\mu_j$ are elicited in a data-driven manner: for each period, the spline coefficients are first estimated via OLS and then smoothed over time via LOESS; refer to Section 4.1 of the manuscript for further details on this strategy.
+Posterior inference proceeds under the model proposed in Section 2 of the manuscript with diffuse hyperparameters `a_sigma = b_sigma  = a_delta = b_delta = a_omega = b_omega =  1e-3`, `a_M = 2e-3`, `b_M = 1e-3` and `a_alpha = b_alpha = 1`. The entries of the GP covariance matrix on the coefficients’ means (eq (4) of the manuscript) are defined through a squared-exponential kernel with length scale `1.5`, while the mean vectors $\mu_j$ are elicited in a data-driven manner: for each period, the spline coefficients are first estimated via OLS and then smoothed over time via LOESS; refer to Section 4.1 of the manuscript for further details on this strategy.
 
 The Gibbs sampler is run for `20000` iterations, discarding the first `10000` as a burn-in. Posterior samples are then summarized into two quantities of interest:
 
